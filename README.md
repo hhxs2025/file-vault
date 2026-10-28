@@ -1,6 +1,6 @@
-# Tiny File Vault (极简文件托管中心)
+# file-vault (极简文件托管中心)
 
-Tiny File Vault 是一个轻量级、高性能的私有文件托管与版本管理系统。专为飞牛 fnOS (FPK) 及 Docker 环境设计，适用于个人图床、静态网页托管、API 配置文件分发及软件包仓库。
+file-vault 是一个轻量级、高性能的私有文件托管与版本管理系统。专为飞牛 fnOS (FPK) 及 Docker 环境设计，适用于个人图床、静态网页托管、API 配置文件分发及软件包仓库。
 
 ## 核心特性
 
@@ -32,3 +32,52 @@ services:
       - ADMIN_PASS=admin123
       - DATA_DIR=/data
       - MAX_SIZE_MB=2048
+```
+
+执行启动命令：
+```bash
+docker compose up -d
+```
+访问 `http://<你的IP>:18080`，输入设置的账号密码即可登录。
+
+### 方式二：飞牛 fnOS (FPK) 安装
+
+1. 在飞牛应用中心，点击右上角“手动安装”。
+2. 选择构建好的 `file-vault.fpk` 文件。
+3. 在安装向导中设置管理端口（默认 18080）。
+4. 安装完成后，点击桌面图标即可打开。
+
+*(注：FPK 版本的数据会安全地挂载在飞牛的 `@appdata/file-vault` 目录下，升级或卸载时受系统保护。)*
+
+## 资源路由与 API
+
+本系统提供无需鉴权的公开读取接口，方便直接嵌入网页或给其他程序调用：
+
+- **直接读取/预览**：`http://<IP>:<PORT>/f/<文件路径>`
+  - 示例：`http://192.168.1.100:18080/f/docs/readme.md`
+  - 访问 `.html` 文件会自动渲染网页，访问 `.json` 直接返回数据。
+- **强制下载**：`http://<IP>:<PORT>/download/<文件路径>`
+- **获取特定版本**：在链接后添加 `?v=版本号`，例如 `/f/test.txt?v=1`。
+
+## 本地开发与构建
+
+1. 安装依赖：
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. 启动开发服务器：
+   ```bash
+   uvicorn app:app --host 0.0.0.0 --port 8080
+   ```
+3. 构建 Docker 镜像：
+   ```bash
+   docker build -t file-vault:latest .
+   ```
+
+## 注意事项
+
+- 请务必在正式环境部署前，修改 `docker-compose.yml` 或 FPK 向导中的默认账号密码 (`ADMIN_USER` / `ADMIN_PASS`)。
+- 出于安全考虑，HTML 文件的直接访问（`/f/xxx.html`）受 `Content-Security-Policy: sandbox` 限制，以防止恶意脚本窃取管理后台凭证。
+
+## License
+MIT License
