@@ -1,83 +1,124 @@
-# file-vault (极简文件托管中心)
+# 📁 File Vault (Tiny File Vault)
 
-file-vault 是一个轻量级、高性能的私有文件托管与版本管理系统。专为飞牛 fnOS及 Docker 环境设计，适用于个人图床、静态网页托管。
+**File Vault** 是一款专为fnOS打造的现代化、极简私有文件托管中心。告别臃肿的网盘，在这里你可以像操作本地硬盘一样，安全、高效地管理你的数字资产。
 
-## 核心特性
+> **💡 核心理念**：零外部依赖、极速秒开、数据完全私有、支持多版本控制。
 
-- **全格式支持**：完美托管 `md`、`json`、`html`、`png/jpg/webp/gif`、`txt`、`pdf`、`apk`、`fpk` 等格式。
-- **自动版本管理**：同名文件覆盖上传自动生成历史版本，支持随时预览、下载或一键回滚。
-- **在线预览与编辑**：内置 Markdown 渲染与代码语法高亮，支持在浏览器内直接编辑文本或代码并保存为新版本。
-- **剪贴板秒传**：支持 `Ctrl + V` 直接粘贴截图或文本，自动生成文件并上传至当前目录。
-- **目录与权限管理**：支持多级虚拟目录、跨目录搜索、批量 ZIP 打包下载与鉴权。数据全部存储在本地。
-- **极简前端**：Vue 3 + Tailwind CSS 构建，无冗余依赖，自带暗黑模式与自定义交互弹窗。
+![File Vault 预览图](https://f.hhxs2026.top:8888/f/imgs/file-vault1.webp)
 
-## 部署方式
+---
 
-### 方式一：Docker Compose 部署
+## ✨ 核心特性
 
-创建一个 `docker-compose.yml` 文件：
+- 🚀 **桌面级控制台**：全新侧边栏布局，实时统计文件总数、目录数与占用空间。
+- 📂 **原生目录系统**：支持新建多层级文件夹、快捷面包屑导航与一键重命名。
+- ⚡ **极速代码预览**：内置零依赖的高亮引擎，压缩的单行 JSON 文件自动美化展开，完美支持 HTML、JSON、Markdown 等文本的在线预览与编辑。
+- 🔄 **文件版本控制**：同名文件上传自动生成历史版本，随时一键回滚，修改不翻车。
+- 🔒 **分享管理中心**：支持“公开/私有”属性切换，可生成带时效、带提取码、带下载次数限制的临时分享链接（可作为个人图床或 API 分发站）。
+- 🗂️ **高级批量操作**：列表勾选模式，支持文件/目录一键批量打包下载（ZIP）与批量删除。
+- 📋 **剪贴板秒传**：随手截图或复制文本，按 `Ctrl+V` 即可快速保存至当前目录。
+- 🛡️ **安全私有**：自带高强度管理员登录鉴权，支持安全登出，数据完全留在自己手中。
+
+---
+
+## 🚀 快速部署
+
+### 方式一：Docker Compose 部署（推荐）
+
+在任意安装了 Docker 的服务器上，创建 `docker-compose.yml` 文件：
 
 ```yaml
 services:
   file-vault:
-    image: ccr.ccs.tencentyun.com/hhxs2025/file-vault:latest
+    image: ccr.ccs.tencentyun.com/hhxs2025/file-vault:1.1
     container_name: file-vault
     restart: unless-stopped
     ports:
-      - "18080:8080"
+      - "8080:8080" # 前面的 8080 可改为你想要的宿主机端口
     volumes:
-      - ./data:/data
+      - ./data:/data # 数据目录，保存所有上传的文件和 SQLite 数据库
     environment:
       - ADMIN_USER=admin
-      - ADMIN_PASS=admin123
+      - ADMIN_PASS=admin123 # 强烈建议修改为强密码
       - DATA_DIR=/data
       - MAX_SIZE_MB=2048
 ```
 
-执行启动命令：
+启动服务：
+
 ```bash
 docker compose up -d
 ```
-访问 `http://<你的IP>:18080`，输入设置的账号密码即可登录。
 
-### 方式二：飞牛 fnOS (FPK) 安装
+访问 `http://你的IP:8080` 即可进入控制台。
 
-1. 在飞牛应用中心，点击右上角“手动安装”。
-2. 选择构建好的 `file-vault.fpk` 文件。
-3. 在安装向导中设置管理端口（默认 18080）。
-4. 安装完成后，点击桌面图标即可打开。
+### 方式二：飞牛 fnOS 原生安装
 
-*(注：FPK 版本的数据会安全地挂载在飞牛的 `@appdata/file-vault` 目录下，升级或卸载时受系统保护。)*
+本项目已完美适配飞牛 FPK 打包规范。在飞牛应用中心安装时，系统会自动弹窗让你配置：
+1. **访问端口**（向导变量 `${wizard_app_port}`）
+2. **管理员密码**（向导变量 `${wizard_app_pass}`）
 
-## 资源路由与 API
+应用数据将被安全地存储在飞牛的系统目录 `${TRIM_PKGVAR}` 中。
 
-本系统提供无需鉴权的公开读取接口，方便直接嵌入网页或给其他程序调用：
+---
 
-- **直接读取/预览**：`http://<IP>:<PORT>/f/<文件路径>`
-  - 示例：`http://192.168.1.100:18080/f/docs/readme.md`
-  - 访问 `.html` 文件会自动渲染网页，访问 `.json` 直接返回数据。
-- **强制下载**：`http://<IP>:<PORT>/download/<文件路径>`
-- **获取特定版本**：在链接后添加 `?v=版本号`，例如 `/f/test.txt?v=1`。
+## ⚙️ 环境变量说明
 
-## 本地开发与构建
+| 变量名 | 默认值 | 说明 |
+| :--- | :--- | :--- |
+| `ADMIN_USER` | `admin` | 控制台登录用户名 |
+| `ADMIN_PASS` | `admin123` | 控制台登录密码（**请务必修改**） |
+| `DATA_DIR` | `/data` | 数据库与文件存储的物理路径 |
+| `MAX_SIZE_MB` | `2048` | 单个文件上传的最大限制（单位：MB） |
 
-1. 安装依赖：
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. 启动开发服务器：
-   ```bash
-   uvicorn app:app --host 0.0.0.0 --port 8080
-   ```
-3. 构建 Docker 镜像：
-   ```bash
-   docker build -t file-vault:latest .
-   ```
+---
 
-## 注意事项
+## 🛠️ 本地开发与构建
 
-- 请务必在正式环境部署前，修改 `docker-compose.yml` 或 FPK 向导中的默认账号密码 (`ADMIN_USER` / `ADMIN_PASS`)。
-- 出于安全考虑，HTML 文件的直接访问（`/f/xxx.html`）受 `Content-Security-Policy: sandbox` 限制，以防止恶意脚本窃取管理后台凭证。
+如果你需要修改源码并自行构建镜像：
 
-## License
-MIT License
+```bash
+# 1. 克隆代码
+git clone https://github.com/yourname/file-vault.git
+cd file-vault
+
+# 2. 构建镜像
+docker build -t file-vault:local .
+
+# 3. 运行
+docker run -d -p 8080:8080 -v $(pwd)/data:/data --name file-vault file-vault:local
+```
+
+**技术栈**：
+- 后端：Python 3.11 + FastAPI + SQLite3
+- 前端：纯原生 HTML / CSS / JavaScript（零外部依赖，无 CDN 阻塞）
+
+---
+
+## 📝 更新日志
+
+### v1.1.0 (2026-10-30)
+- **✨ 交互与 UI 全面焕新**
+  - 新增桌面级侧边栏布局与空间统计。
+  - 支持新建真正的空文件夹与面包屑导航。
+  - 全新引入列表勾选模式，支持全选、批量打包下载（ZIP）与批量删除。
+- **🔒 安全与分享机制升级**
+  - 新增文件“公开/私有”属性切换。
+  - 支持生成带时效、提取码、下载限制的临时分享链接。
+  - 重构鉴权体系，升级为带时效的 Session 状态。
+- **⚡ 性能与预览优化**
+  - 移除所有外部 CDN 依赖，实现控制台极速秒开。
+  - 内置轻量级高亮引擎，支持 JSON 自动美化展开。
+- **🛠️ 底层修复**
+  - **[重要]** 增加数据库自动迁移逻辑，完美兼容 1.0.0 老版本数据库无损升级。
+  - 修复批量删除文件夹时遗留空记录的问题。
+
+---
+
+## ⚠️ 免责声明
+
+本项目仅供个人学习与私有化部署使用。请勿用于任何违反当地法律法规的用途。请务必在公网暴露时设置强密码，并建议配合反代工具（如 Nginx、Lucky）开启 HTTPS 访问。
+
+## 📄 开源协议
+
+[MIT License](LICENSE)
